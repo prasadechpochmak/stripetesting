@@ -7,7 +7,10 @@ const path = require('path');
 app.use(express.json());
 app.use(express.static('public'));
 
-app.post('/create-charge', async (req, res) => {
+const memory = {}; // To temporarily store customer and bank account IDs
+
+// Step 1: Create customer and bank account (starts microdeposits)
+app.post('/create-bank-account', async (req, res) => {
   const { name, email, accountNumber, routingNumber } = req.body;
 
   try {
@@ -25,17 +28,36 @@ app.post('/create-charge', async (req, res) => {
       },
     });
 
-    const charge = await stripe.charges.create({
-      amount: 1000,
-      currency: 'usd',
-      customer: customer.id,
-      source: bankAccount.id,
-      description: 'ACH Reverse Example',
-    });
+    memory[email] = { customerId: customer.id, bankAccountId: bankAccount.id };
 
-    res.json({ success: true, charge });
+    res.json({
+      message: 'Bank account added. Please wait for microdeposits and then verify.',
+      customerId: customer.id,
+      bankAccountId: bankAccount.id,
+    });
   } catch (err) {
-    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Step 2: Verify microdeposit amounts
+app.post('/verify-bank-account', async (req, res) => {
+  const { email, amount1, amount2 } = req.body;
+  const record = memory[email];
+
+  if (!record) {
+    return res.status(400).json({ error: 'No bank account record found for this email.' });
+  }
+
+  try {
+    const verification = await stripe.customers.verifySource(
+      record.customerId,
+      record.bankAccountId,
+      { amounts: [parseInt(amount1), parseInt(amount2)] }
+    );
+
+    res.json({ message: 'Bank account verified!', verification });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

@@ -1,5 +1,5 @@
 {
-  "name": "stripe-ach-reverse",
+  "name": "stripe-ach-verification",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {

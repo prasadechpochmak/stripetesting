@@ -1,34 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ACH Reverse Charge</title>
+  <title>ACH Bank Verification</title>
 </head>
 <body>
-  <h2>ACH Bank Debit</h2>
-  <form id="ach-form">
+  <h2>Step 1: Add Bank Account</h2>
+  <form id="create-form">
     <input name="name" placeholder="Full Name" required><br>
     <input name="email" placeholder="Email" required><br>
     <input name="routingNumber" placeholder="Routing Number" required><br>
     <input name="accountNumber" placeholder="Account Number" required><br>
-    <button type="submit">Debit Bank</button>
+    <button type="submit">Submit Bank Info</button>
   </form>
-  <div id="result"></div>
+
+  <h2>Step 2: Verify Microdeposits</h2>
+  <form id="verify-form">
+    <input name="email" placeholder="Email used above" required><br>
+    <input name="amount1" placeholder="Amount 1 (in cents)" required><br>
+    <input name="amount2" placeholder="Amount 2 (in cents)" required><br>
+    <button type="submit">Verify</button>
+  </form>
+
+  <pre id="result"></pre>
 
   <script>
-    const form = document.getElementById('ach-form');
-    form.addEventListener('submit', async (e) => {
+    document.getElementById('create-form').onsubmit = async (e) => {
       e.preventDefault();
-      const data = Object.fromEntries(new FormData(form));
-
-      const res = await fetch('/create-charge', {
+      const data = Object.fromEntries(new FormData(e.target));
+      const res = await fetch('/create-bank-account', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)
       });
-
       const result = await res.json();
       document.getElementById('result').innerText = JSON.stringify(result, null, 2);
-    });
+    };
+
+    document.getElementById('verify-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const res = await fetch('/verify-bank-account', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      document.getElementById('result').innerText = JSON.stringify(result, null, 2);
+    };
   </script>
 </body>
 </html>
+
